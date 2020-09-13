@@ -2,11 +2,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h> // Criar processos
+#include <sys/shm.h> // Mem compartilhada
+#include <sys/wait.h>
 
 // --------------------------------------------------------------------------------------------------------------------------
 
-#define kN 5 // Matriz quadrada de NxN, dimensao N da matriz 
-#define kNRO_PROCESSOS 4 // Numero P de processos 
+#define kN 10 // Matriz quadrada de NxN, dimensao N da matriz
+#define kNRO_PROCESSOS 4 // Numero P de processos
+#define kVALOR_MAX_CAMPO_MATRIZ 100
+#define kPERMISSAO_MEM_COMPARTILHADA 0600
+#define kCHAVE_MEM_COMPARTILHADA 3
 #define kDEBUG
 
 // --------------------------------------------------------------------------------------------------------------------------
@@ -43,8 +49,7 @@ void geraMatrizRandom(int *mat, int max) {
 
     for(i=0;i<kN;i++) {
         for(j=0;j<kN;j++) {
-            mat[(i*kN) + j] =(int) rand() % max+1;
-
+            mat[(i*kN) + j] = (int)rand() % (max+1);
         }
     }
 }
@@ -59,19 +64,19 @@ void printMatriz(int *mat) {
     }
 }
 
-void multLogica(int *matA, int *matB, int *matResposta) {
+void multLogica(int linhaInicial, int nroProcessos, int *matA, int *matB, int *bufferResposta) {
     int i,j,k;
 
     int minAux[kN];
     int cont = 0;
 
-    for(i=0;i<kN;i++) {
+    for(i=linhaInicial ; i<kN ; i+=nroProcessos) {
         for(j=0;j<kN;j++) {
            for(k=0,cont=0;k<kN;k++,cont++) {
                 minAux[cont] = min(matA[(j*kN)+k],matB[(k*kN)+i ]);
            }
 
-           matResposta[(j*kN)+i] = maximo(minAux);
+           bufferResposta[(j*kN)+i] = maximo(minAux);
         }
     }
 }
@@ -82,35 +87,67 @@ int main() {
         #error Nro. processos deve ser menor ou igual a dimensao da matriz
     #endif
 
+	int *mat3 = NULL;
+    int shmid, chave = kCHAVE_MEM_COMPARTILHADA, i = 0, pid, linhaInicial = 0;
+
     //ALOCA MATRIZES
-    int *mat1 =(int *) malloc (kN * kN * sizeof (int));
-    int *mat2 = (int *) malloc (kN * kN * sizeof(int));
-    int *mat3 = (int *) malloc (kN * kN * sizeof(int));
+    int *mat1 =(int *)malloc(kN * kN * sizeof(int));
+    int *mat2 = (int *)malloc(kN * kN * sizeof(int));
 
     srand(time(NULL));
 
     //GERA MATRIZES
-    geraMatrizRandom(mat1, 100);
-    geraMatrizRandom(mat2, 100);
+    geraMatrizRandom(mat1, kVALOR_MAX_CAMPO_MATRIZ);
+    geraMatrizRandom(mat2, kVALOR_MAX_CAMPO_MATRIZ);
 
-    multLogica(mat1,mat2,mat3);
+    shmid = shmget(chave, (sizeof(int)*(int)pow(kN,2)), kPERMISSAO_MEM_COMPARTILHADA | IPC_CREAT);
 
-#ifdef kDEBUG
-    //PRINT MATRIZES
-    printf("\nPrintando Matriz 1:\n");
-    printMatriz(mat1);
+    mat3 = shmat(shmid, 0, 0);
 
-    printf("\nPrintando Matriz 2:\n");
-    printMatriz(mat2);
+    for(i=1 ; i<kNRO_PROCESSOS ; i++) {
+        pid = fork();
 
-    printf("\nPrintando Matriz Resultado:\n");
-    printMatriz(mat3);
-#endif
+        // Filho
+        if(pid == 0) {
+            linhaInicial = i;
+            break;
+        }
+    }
+
+    multLogica(linhaInicial, kNRO_PROCESSOS, mat1, mat2, mat3);
+
+    // Filhos
+    if(linhaInicial != 0) {
+        shmdt(mat3);
+    }
+    // Pai
+    else {
+
+        for(i=1 ; i<kNRO_PROCESSOS ; i++) {
+            wait(NULL);
+        }
+
+        #ifdef kDEBUG
+        //PRINT MATRIZES
+        printf("\nPrintando Matriz 1:\n");
+        printMatriz(mat1);
+
+        printf("\nPrintando Matriz 2:\n");
+        printMatriz(mat2);
+
+        printf("\nPrintando Matriz Resultado:\n");
+        printMatriz(mat3);
+        printf("\n");
+        #endif
+
+        shmdt(mat3);
+
+        shmctl(shmid, IPC_RMID, 0);
+    }
 
     //LIBERA ESPACO ALOCADO
     free(mat1);
     free(mat2);
-    free(mat3);
 }
 
 // --------------------------------------------------------------------------------------------------------------------------
