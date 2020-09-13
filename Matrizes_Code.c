@@ -28,7 +28,7 @@ int maximo(int minimos[kN]) {
 
     int maximo = max(minimos[0],minimos[1]);
 
-    for(int i=2;i<kN;i++) {
+    for(int i=2 ; i<kN ; i++) {
         maximo = (max(maximo,minimos[i]));
     }
 
@@ -47,8 +47,8 @@ void geraMatrizRandom(int *mat, int max) {
 
     int i,j;
 
-    for(i=0;i<kN;i++) {
-        for(j=0;j<kN;j++) {
+    for(i=0 ; i<kN ; i++) {
+        for(j=0 ; j<kN ; j++) {
             mat[(i*kN) + j] = (int)rand() % (max+1);
         }
     }
@@ -56,8 +56,8 @@ void geraMatrizRandom(int *mat, int max) {
 
 void printMatriz(int *mat) {
 
-    for(int i = 0;i<kN;i++) {
-        for(int j = 0;j<kN;j++) {
+    for(int i=0 ; i<kN ; i++) {
+        for(int j=0 ; j<kN ; j++) {
            printf("|%d|", mat[(i*kN) + j]);
         }
         printf("\n");
@@ -65,15 +65,14 @@ void printMatriz(int *mat) {
 }
 
 void multLogica(int linhaInicial, int nroProcessos, int *matA, int *matB, int *bufferResposta) {
-    int i,j,k;
-
+    int i, j, k;
     int minAux[kN];
     int cont = 0;
 
     for(i=linhaInicial ; i<kN ; i+=nroProcessos) {
-        for(j=0;j<kN;j++) {
-           for(k=0,cont=0;k<kN;k++,cont++) {
-                minAux[cont] = min(matA[(j*kN)+k],matB[(k*kN)+i ]);
+        for(j=0 ; j<kN ; j++) {
+           for(k=0,cont=0 ; k<kN ; k++,cont++) {
+                minAux[cont] = min(matA[(j*kN)+k],matB[(k*kN)+i]);
            }
 
            bufferResposta[(j*kN)+i] = maximo(minAux);
@@ -90,13 +89,13 @@ int main() {
 	int *mat3 = NULL;
     int shmid, chave = kCHAVE_MEM_COMPARTILHADA, i = 0, pid, linhaInicial = 0;
 
-    //ALOCA MATRIZES
-    int *mat1 =(int *)malloc(kN * kN * sizeof(int));
-    int *mat2 = (int *)malloc(kN * kN * sizeof(int));
+    // Aloca matrizes
+    int *mat1 =(int*)malloc(kN * kN * sizeof(int));
+    int *mat2 = (int*)malloc(kN * kN * sizeof(int));
 
     srand(time(NULL));
 
-    //GERA MATRIZES
+    // Gera matrizes
     geraMatrizRandom(mat1, kVALOR_MAX_CAMPO_MATRIZ);
     geraMatrizRandom(mat2, kVALOR_MAX_CAMPO_MATRIZ);
 
@@ -128,7 +127,6 @@ int main() {
         }
 
         #ifdef kDEBUG
-        //PRINT MATRIZES
         printf("\nPrintando Matriz 1:\n");
         printMatriz(mat1);
 
@@ -145,7 +143,6 @@ int main() {
         shmctl(shmid, IPC_RMID, 0);
     }
 
-    //LIBERA ESPACO ALOCADO
     free(mat1);
     free(mat2);
 }
