@@ -3,46 +3,57 @@
 #include <stdlib.h>
 #include<time.h>
 
+// --------------------------------------------------------------------------------------------------------------------------
 
-#define N 5
-//Matriz quadrada de NxN
+// Matriz quadrada de NxN
+#define kN 5
+#define kDEBUG
 
+// --------------------------------------------------------------------------------------------------------------------------
 
 int max(int a, int b){
     if(a>=b)
         return a;
+
     return b;
 }
 
-int maximo(int minimos[N]){
+int maximo(int minimos[kN]){
+
     int maximo = max(minimos[0],minimos[1]);
-    for(int i=2;i<N;i++){
+
+    for(int i=2;i<kN;i++){
         maximo = (max(maximo,minimos[i]));
     }
+
     return maximo;
 }
 
 int min(int a, int b){
+
     if(a<=b)
         return a;
+
     return b;
 }
 
 void geraMatrizRandom(int *mat, int max){
+
     int i,j;
-    for(i=0;i<N;i++){
-        for(j=0;j<N;j++){
-            mat[(i*N) + j] =(int) rand() % max+1;
+
+    for(i=0;i<kN;i++){
+        for(j=0;j<kN;j++){
+            mat[(i*kN) + j] =(int) rand() % max+1;
 
         }
     }
 }
 
 void printMatriz(int *mat){
-    printf("Printando Matriz \n");
-    for(int i = 0;i<N;i++){
-        for(int j = 0;j<N;j++){
-           printf("|%d|", mat[(i*N) + j]);
+
+    for(int i = 0;i<kN;i++){
+        for(int j = 0;j<kN;j++){
+           printf("|%d|", mat[(i*kN) + j]);
         }
         printf("\n");
     }
@@ -51,44 +62,49 @@ void printMatriz(int *mat){
 void multLogica(int *matA, int *matB, int *matResposta){
     int i,j,k;
 
-    int minAux[N];
+    int minAux[kN];
     int cont = 0;
 
-    for(i=0;i<N;i++){
-        for(j=0;j<N;j++){
-
-           for(k=0,cont=0;k<N;k++,cont++){
-            minAux[cont] = min(matA[(j*N)+k],matB[(k*N)+i ]);
+    for(i=0;i<kN;i++){
+        for(j=0;j<kN;j++){
+           for(k=0,cont=0;k<kN;k++,cont++){
+                minAux[cont] = min(matA[(j*kN)+k],matB[(k*kN)+i ]);
            }
-           matResposta[(j*N)+i] = maximo(minAux);
+
+           matResposta[(j*kN)+i] = maximo(minAux);
         }
-
     }
-
 }
 
 int main(){
-//ALOCA MATRIZES
-int *mat1 =(int *) malloc (N * N * sizeof (int));
-int *mat2 = (int *) malloc (N * N * sizeof(int));
-int *mat3 = (int *) malloc (N * N * sizeof(int));
-srand(time(NULL));
-//GERA MATRIZES
-geraMatrizRandom(mat1, 100);
-geraMatrizRandom(mat2, 100);
 
-multLogica(mat1,mat2,mat3);
-//PRINT MATRIZES
-printMatriz(mat1);
-printMatriz(mat2);
-printMatriz(mat3);
+    //ALOCA MATRIZES
+    int *mat1 =(int *) malloc (kN * kN * sizeof (int));
+    int *mat2 = (int *) malloc (kN * kN * sizeof(int));
+    int *mat3 = (int *) malloc (kN * kN * sizeof(int));
 
-//LIBERA ESPAÇO ALOCADO
-free(mat1);
-free(mat2);
-free(mat3);
+    srand(time(NULL));
 
+    //GERA MATRIZES
+    geraMatrizRandom(mat1, 100);
+    geraMatrizRandom(mat2, 100);
 
+    multLogica(mat1,mat2,mat3);
 
+#ifdef kDEBUG
+    //PRINT MATRIZES
+    printf("\nPrintando Matriz 1:\n");
+    printMatriz(mat1);
+    printf("\nPrintando Matriz 2:\n");
+    printMatriz(mat2);
+    printf("\nPrintando Matriz Resultado:\n");
+    printMatriz(mat3);
+#endif
 
+    //LIBERA ESPACO ALOCADO
+    free(mat1);
+    free(mat2);
+    free(mat3);
 }
+
+// --------------------------------------------------------------------------------------------------------------------------
